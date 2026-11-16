@@ -10,7 +10,7 @@ Together they choose what to bring, where to land and how to build a base near t
 have to keep it alive for 7 days. Every choice changes oxygen, water, food, energy and radiation, and the game
 always explains **why** with a real fact from NASA.
 
-> Team: Isaac Gerardo Daniel Romero Alviarez, Leticia Fernández, María Celeste Salinas Viloria, Ramón Gregorio Araujo Mayorca, Yamir Jhosue Soteldo León and Larry Jesus Sanchez Silva.
+> Team: Isaac Gerardo Daniel Romero Alviarez, Letizia Mariel Fernández Carmona, María Celeste Salinas Viloria, Ramón Gregorio Araujo Mayorca, Yamir Jhosue Soteldo León and Larry Jesus Sanchez Silva.
 
 ## How a game goes (18 to 28 minutes)
 
