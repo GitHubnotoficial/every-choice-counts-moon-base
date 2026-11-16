@@ -176,7 +176,7 @@ local function decorate(d: Model)
 	for i = 1, 70 do
 		local t = (i / 70) * math.pi * 1.1 - math.pi * 0.55 -- de horizonte a horizonte
 		local dir = mwDir(t + rng:NextNumber(-0.03, 0.03))
-		if dir.Y < 0.02 then continue end
+		if dir.Y < 0.14 then continue end -- pegadas al horizonte se veían como discos gigantes (y las colinas las tapan)
 		local core = math.exp(-((t - 0.35) / 0.35) ^ 2) -- zona del centro galáctico
 		local pos = center + dir * DIST
 		local cf = CFrame.lookAt(pos, center) * CFrame.Angles(0, 0, math.atan2(math.cos(t), math.sin(t)) + rng:NextNumber(-0.15, 0.15))

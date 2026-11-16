@@ -18,3 +18,6 @@ La entrega exige decir dónde y cómo se usó IA. Imágenes/videos generados: ma
 | 15-nov | Claude (Claude Code) | Escribió SO_EasterEggs, SO_DidYouKnow y sus textos en Config (datos con fuente) | `src/` y Studio | Isaac |
 | 15-nov | Claude (Claude Code) | Escribió las animaciones de las emergencias, la cabina del cohete (SO_Cockpit), el retraso de comunicación (CommsDelay) y redactó README, LICENSE y los textos del formulario (`docs/SUBMISSION.md`) | `src/`, raíz y `docs/` | Isaac |
 | 15-nov | Claude (Claude Code) | Easter eggs v3: modelos de martillo, pluma y reflector; SO_EggsClient (brazos y láser); Config.MoonSky | `src/` y Studio | Isaac |
+| 15-nov | Claude (Claude Code) | Escribió SO_WorldLabels y Config.WorldLabels (carteles por distancia) | `src/` y Studio | Isaac |
+| 15-nov | ElevenLabs (voz "Brian C. - Professional Latin Narrator", modelo Eleven v4, idioma English) | Narración en inglés del video promocional de 29 s (generada el 15-nov, no se usó audio anterior al 14-nov). Declarada en la marca del video y en sus metadatos | `video/promo/voz.mp3`, `video/promo/Every_Choice_Counts_Moon_Base_promo.mp4` | Isaac |
+| 15-nov | Claude (Claude Code) | Armó el video promocional (escenas HTML con capturas reales del juego, render con Chrome y ffmpeg) | `video/promo/` | Isaac |

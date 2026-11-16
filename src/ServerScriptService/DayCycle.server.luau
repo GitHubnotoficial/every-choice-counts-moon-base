@@ -165,7 +165,9 @@ Remotes.DebugSkip.OnServerEvent:Connect(function(_p, what)
 		skipDay = true
 	elseif what == "fill" then
 		for _, p in Players:GetPlayers() do
-			p:SetAttribute("O2", 100); p:SetAttribute("Water", 100); p:SetAttribute("Radiation", 0)
+			if not p:GetAttribute("Dead") then -- 16-nov: no llenar las barras de un espectador
+				p:SetAttribute("O2", 100); p:SetAttribute("Water", 100); p:SetAttribute("Radiation", 0)
+			end
 		end
 	end
 end)

@@ -19,10 +19,11 @@ local KEYS = { "ClockTime", "Brightness", "ExposureCompensation", "Ambient", "Ou
 -- Luna: noche (cielo negro con estrellas) pero el suelo bien iluminado, como en la demo
 local MOON = {
 	-- 15-nov: antes 5.5 y 0.35; la nave blanca y el suelo se veían como un foco (pedido de Isaac)
-	ClockTime = 20.05, Brightness = 3.2, ExposureCompensation = 0,
+	-- 16-nov: lo blanco se veía como un foco y sin detalles: menos luz, exposición más baja y menos reflejo del cielo
+	ClockTime = 20.05, Brightness = 2.5, ExposureCompensation = -0.15,
 	Ambient = Color3.fromHex("4A4F78"), OutdoorAmbient = Color3.fromHex("7C82A8"),
 	FogEnd = 100000, FogColor = Color3.fromHex("000000"),
-	EnvironmentDiffuseScale = 0.4, EnvironmentSpecularScale = 0.6,
+	EnvironmentDiffuseScale = 0.35, EnvironmentSpecularScale = 0.2,
 	ShadowSoftness = 0.05, -- sombras nítidas (no hay aire que las suavice)
 	GeographicLatitude = -89.5, -- polo sur: la luz llega muy baja
 }
@@ -391,6 +392,51 @@ local function makeSkyDome(): Model
 	return m
 end
 
+---------------------------------------------------------------------
+-- 16-nov: lo blanco en la Luna (modelos de Ramón con textura casi blanca y piezas blancas) quedaba quemado.
+-- Solo en este cliente y mientras está en la Luna: se tiñe de gris claro y al salir vuelve a su color.
+---------------------------------------------------------------------
+local earthEffectsOff: { Instance } = {}
+local toned: { [Instance]: Color3 } = {}
+local toneConn: RBXScriptConnection? = nil
+local SA_TINT = Color3.fromRGB(194, 196, 208) -- tinte de las texturas (SurfaceAppearance)
+local WHITE_MAX = 0.74 -- brillo máximo de una pieza blanca
+local function toneOne(d: Instance)
+	if toned[d] then return end
+	if d:IsA("SurfaceAppearance") then
+		local c = d.Color
+		if c.R > 0.9 and c.G > 0.9 and c.B > 0.9 then
+			toned[d] = c
+			d.Color = SA_TINT
+		end
+	elseif d:IsA("BasePart") and d.Material ~= Enum.Material.Neon and d.Transparency < 1
+		and not d:FindFirstChildOfClass("SurfaceAppearance") then
+		local c = d.Color
+		local mx, mn = math.max(c.R, c.G, c.B), math.min(c.R, c.G, c.B)
+		if mx > 0.82 and mx - mn < 0.12 then -- blanco o casi blanco (no los colores de los roles)
+			toned[d] = c
+			local k = WHITE_MAX / mx
+			d.Color = Color3.new(c.R * k, c.G * k, c.B * k)
+		end
+	end
+end
+local function toneDownWhites()
+	local site = workspace:FindFirstChild("MoonSite")
+	if not site then return end
+	for _, d in site:GetDescendants() do toneOne(d) end
+	-- lo que aparece después (objetos colocados, naves, puntos de misión)
+	toneConn = site.DescendantAdded:Connect(function(d)
+		task.defer(toneOne, d)
+	end)
+end
+local function restoreWhites()
+	if toneConn then toneConn:Disconnect(); toneConn = nil end
+	for d, c in toned do
+		if d.Parent then (d :: any).Color = c end
+	end
+	table.clear(toned)
+end
+
 local function addEffect(class: string, props: { [string]: any })
 	local e = Instance.new(class)
 	e.Name = "SO_Moon" .. class
@@ -417,8 +463,17 @@ local function enterMoon()
 	moonSky = sky
 	-- Brillo del Sol y del neón, y más contraste (paleta fría)
 	-- 15-nov: umbral alto para que solo brillen el neón y el Sol, no las superficies blancas (antes 1.6 / 40 / 0.9)
-	addEffect("BloomEffect", { Intensity = 0.5, Size = 24, Threshold = 1.6 })
-	addEffect("ColorCorrectionEffect", { Contrast = 0.18, Saturation = -0.05, TintColor = Color3.fromHex("EEF0FF") })
+	-- 16-nov: umbral más alto y menos contraste; además se apagan el Bloom y los SunRays de la Tierra, que seguían
+	-- encendidos en la Luna (eran dos Bloom a la vez)
+	addEffect("BloomEffect", { Intensity = 0.4, Size = 24, Threshold = 2.6 })
+	addEffect("ColorCorrectionEffect", { Contrast = 0.08, Saturation = -0.05, TintColor = Color3.fromHex("EEF0FF") })
+	for _, e in Lighting:GetChildren() do
+		if (e:IsA("BloomEffect") or e:IsA("SunRaysEffect")) and e.Enabled and not string.find(e.Name, "^SO_Moon") then
+			e.Enabled = false
+			table.insert(earthEffectsOff, e)
+		end
+	end
+	toneDownWhites()
 	addEffect("SunRaysEffect", { Intensity = 0.12, Spread = 0.6 })
 	sun = makeSun()
 	sunModel = skyClone("Sun", SUN_MODEL_DIAM)
@@ -438,6 +493,9 @@ end
 
 local function leaveMoon()
 	for _, k in KEYS do (Lighting :: any)[k] = original[k] end
+	for _, e in earthEffectsOff do e.Enabled = true end
+	table.clear(earthEffectsOff)
+	restoreWhites()
 	if atm and atmOriginal then
 		for k, v in atmOriginal do (atm :: any)[k] = v end
 	end

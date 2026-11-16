@@ -1,0 +1,86 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Moon Base promo</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;width:1280px;height:720px;overflow:hidden;background:#05060c;font-family:Fredoka,Inter,Arial,sans-serif;color:#fff}
+  .scene{position:absolute;inset:0;opacity:0}
+  .bg{position:absolute;inset:-6%;background-size:cover;background-position:center}
+  .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,12,.55) 0%,rgba(5,6,12,0) 35%,rgba(5,6,12,0) 60%,rgba(5,6,12,.75) 100%)}
+  .cap{position:absolute;left:0;right:0;bottom:52px;text-align:center;font-weight:700;font-size:54px;letter-spacing:.5px;text-shadow:0 4px 18px rgba(0,0,0,.8)}
+  .small{font-size:26px;font-weight:500;color:#cfd6ff;font-family:Inter,Arial}
+  .chips{position:absolute;left:0;right:0;top:250px;display:flex;justify-content:center;gap:22px}
+  .chip{padding:16px 26px;border-radius:40px;font-size:36px;font-weight:700;opacity:0;transform:translateY(30px)}
+  .title{position:absolute;left:0;right:0;top:200px;text-align:center}
+  .t1{font-size:44px;color:#FFD43B;font-weight:700;letter-spacing:3px}
+  .t2{font-size:118px;font-weight:700;line-height:1;margin-top:8px;text-shadow:0 6px 30px rgba(120,140,255,.6)}
+  .live{position:absolute;left:50%;top:70px;transform:translateX(-50%);background:#e8341c;padding:10px 24px;border-radius:30px;font-size:30px;font-weight:700;opacity:0}
+  .big{position:absolute;left:0;right:0;top:250px;padding:18px 0;background:linear-gradient(90deg,rgba(5,6,12,0),rgba(5,6,12,.78) 20%,rgba(5,6,12,.78) 80%,rgba(5,6,12,0));text-align:center;font-size:110px;font-weight:700;color:#FFD27A;text-shadow:0 0 40px rgba(255,170,60,.9),0 6px 20px #000;opacity:0}
+  .sun{position:absolute;right:-120px;top:-140px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,#fff6d0 0%,#ffcf5a 30%,#ff7a1f 55%,rgba(255,90,20,0) 72%);opacity:0;mix-blend-mode:screen}
+  .wm{position:absolute;right:18px;bottom:12px;font:500 14px Inter,Arial;color:rgba(255,255,255,.75)}
+  .end{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,#1c2a6b 0%,#05060c 70%)}
+  .stars i{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%}
+</style></head>
+<body>
+<!-- 1 · título -->
+<div class="scene" id="s1"><div class="bg" id="b1" style="background-image:url(shots/07_moon_wide.jpg)"></div><div class="shade"></div>
+  <div class="title"><div class="t1">FOUR KIDS · ONE MOON BASE</div><div class="t2">EVERY CHOICE<br>COUNTS</div></div></div>
+<!-- 2 · roles -->
+<div class="scene" id="s2"><div class="bg" id="b2" style="background-image:url(shots/10_captain_room.jpg)"></div><div class="shade"></div>
+  <div class="chips">
+    <div class="chip" style="background:#FC3D21">CAPTAIN</div><div class="chip" style="background:#FFD43B;color:#1a1240">ENGINEER</div>
+    <div class="chip" style="background:#2F7BFF">LIFE SUPPORT</div><div class="chip" style="background:#3DD68C;color:#1a1240">BOTANIST</div></div>
+  <div class="cap">Pick your gear<br><span class="small">Every option was really used: Apollo, ISS, KRUSTY, Veggie</span></div></div>
+<!-- 3 · despegue -->
+<div class="scene" id="s3"><div class="bg" id="b3" style="background-image:url(shots/01_spacecenter.jpg)"></div><div class="shade"></div>
+  <div class="cap" id="c3">3</div></div>
+<!-- 4 · aterrizaje -->
+<div class="scene" id="s4"><div class="bg" id="b4" style="background-image:url(shots/13_lander_moon.jpg)"></div><div class="shade"></div>
+  <div class="cap">Land at a real Artemis site<br><span class="small">Lunar south pole · 1/6 gravity</span></div></div>
+<!-- 5 · base -->
+<div class="scene" id="s5"><div class="bg" id="b5" style="background-image:url(shots/11_engineer_room.jpg)"></div><div class="shade"></div>
+  <div class="cap" id="c5"></div></div>
+<!-- 6 · el Sol es real -->
+<div class="scene" id="s6"><div class="bg" id="b6" style="background-image:url(shots/09_flare_card.jpg)"></div><div class="shade"></div>
+  <div class="sun" id="sun"></div><div class="live" id="live">NASA DONKI SPACE WEATHER</div>
+  <div class="big" id="big" style="font-size:84px">REAL NASA SPACE WEATHER</div>
+  <div class="cap"><span class="small">Real solar flares, storms and radiation drive every game</span></div></div>
+<!-- 7 · cierre -->
+<div class="scene" id="s7"><div class="end"></div><div class="stars" id="stars"></div>
+  <div class="title" style="top:170px"><div class="t1">NASA SPACE APPS 2026 · JUNIOR ASTRONAUT MISSION TRAINER</div>
+  <div class="t2" style="font-size:96px">EVERY CHOICE COUNTS:<br>MOON BASE</div>
+  <div class="small" style="margin-top:26px;font-size:34px;color:#FFD43B">Train like an astronaut. Free on Roblox.</div></div></div>
+<div class="wm">Gameplay captured in Roblox · Narration: AI voice (ElevenLabs)</div>
+<script>
+// Línea de tiempo (segundos). CUTS se ajusta al largo de la narración.
+window.CUTS = [0, 3.4, 7.6, 11.2, 14.8, 18.6, 24.6, 30];
+const st = document.getElementById('stars');
+for (let i = 0; i < 140; i++) { const s = document.createElement('i'); s.style.left = (Math.random()*100)+'%'; s.style.top = (Math.random()*100)+'%'; s.style.opacity = Math.random(); st.appendChild(s); }
+const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+const ease = k => 1 - Math.pow(1-k, 3);
+window.setTime = function (t) {
+  const C = window.CUTS;
+  for (let i = 1; i <= 7; i++) {
+    const a = C[i-1], b = C[i];
+    const el = document.getElementById('s'+i);
+    // fundido 0,35 s al entrar y al salir
+    let o = 0;
+    if (t >= a - 0.35 && t <= b + 0.35) o = Math.min(clamp((t-(a-0.35))/0.35,0,1), clamp(((b+0.35)-t)/0.35,0,1));
+    if (i === 1 && t < 0.35) o = clamp(t/0.35,0,1);
+    if (i === 7 && t > b - 0.01) o = 1;
+    el.style.opacity = o;
+    const k = clamp((t-a)/(b-a),0,1);
+    const bg = document.getElementById('b'+i);
+    if (bg) bg.style.transform = `scale(${1.02 + 0.08*k}) translateX(${(i%2?-1:1)*k*14}px)`;
+    if (i === 2) [...el.querySelectorAll('.chip')].forEach((c,j)=>{ const kk = ease(clamp((t-a-0.25-j*0.45)/0.4,0,1)); c.style.opacity = kk; c.style.transform = `translateY(${30*(1-kk)}px)`; });
+    if (i === 3) { const left = Math.ceil(3 - (t-a)/0.8); document.getElementById('c3').textContent = left > 0 ? String(left) : 'LIFTOFF!';
+      const sh = left > 0 ? 0 : 6*clamp((t-a-2.4)/1,0,1); bg.style.transform += ` translate(${(Math.sin(t*90)*sh).toFixed(1)}px,${(Math.cos(t*77)*sh).toFixed(1)}px)`; }
+    if (i === 5) { const w = ['Build the base.','Grow food.','Keep the air flowing.']; const n = clamp(Math.floor((t-a)/((b-a)/3)),0,2); document.getElementById('c5').textContent = w[n]; }
+    if (i === 6) { document.getElementById('live').style.opacity = clamp((t-a-0.2)/0.4,0,1);
+      const kb = ease(clamp((t-a-1.6)/0.6,0,1)); const big = document.getElementById('big'); big.style.opacity = kb; big.style.transform = `scale(${0.85+0.15*kb})`;
+      document.getElementById('sun').style.opacity = 0.35 + 0.35*Math.sin(t*3)**2; }
+  }
+};
+window.setTime(0);
+</script>
+</body></html>

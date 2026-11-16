@@ -44,6 +44,9 @@ local function radMult(): number
 	local m = 1.5 -- sin hábitat colocado
 	local spot = find(Config.Spots.cap, GS:GetAttribute("Spot_cap") or "")
 	if spot then m = spot.RadMult end
+	-- 16-nov: tormenta de radiación (B) y muro de provisiones: el multiplicador del hábitat pasa a ×0,5 ese día
+	local shield = GS:GetAttribute("Mod_HabitatRadMult")
+	if shield then m = math.min(m, shield) end
 	if GS:GetAttribute("Choice_eng") == "reactor" and GS:GetAttribute("Spot_eng") == "next_lander" then
 		m *= R.NoReactorNearMult
 	end
@@ -172,7 +175,8 @@ refillPrompt.Triggered:Connect(function(p)
 	if needO2 + needWater < 1 then return end
 	if GS:GetAttribute("Phase") == "Phase3" then
 		-- En la Fase 3 la recarga sale de la reserva compartida (1 % de barra = 0,35 % de reserva)
-		local cost = Config.Reserve.RefillCost
+		local byN = Config.Reserve.RefillCostByPlayers -- 16-nov: costo según cuántos jugadores hay
+		local cost = byN and byN[math.clamp(#Players:GetPlayers(), 1, #byN)] or Config.Reserve.RefillCost
 		local rO2, rW = GS:GetAttribute("ReserveO2") or 0, GS:GetAttribute("ReserveWater") or 0
 		needO2 = math.min(needO2, rO2 / cost)
 		needWater = math.min(needWater, rW / cost)

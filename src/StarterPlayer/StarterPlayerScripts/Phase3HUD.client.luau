@@ -160,7 +160,9 @@ local function canIChoose(role: string): boolean
 	local mine = "," .. (player:GetAttribute("Roles") or "") .. "," .. (player:GetAttribute("Belts") or "") .. ","
 	if string.find(mine, "," .. role .. ",", 1, true) then return true end
 	for _, p in Players:GetPlayers() do
-		if not p:GetAttribute("Dead") and string.find("," .. (p:GetAttribute("Roles") or "") .. ",", "," .. role .. ",", 1, true) then
+		-- 16-nov: también cuenta quien lleva el cinturón de ese rol (igual que el servidor)
+		local theirs = "," .. (p:GetAttribute("Roles") or "") .. "," .. (p:GetAttribute("Belts") or "") .. ","
+		if not p:GetAttribute("Dead") and string.find(theirs, "," .. role .. ",", 1, true) then
 			return false
 		end
 	end
@@ -213,26 +215,78 @@ end
 ---------------------------------------------------------------------
 -- Luz que cruza la Luna (PDF 4.2): una sola animación, color del rol que decidió
 ---------------------------------------------------------------------
-local moonBox = frame(gui, "MoonLight", UDim2.fromOffset(220, 220), UDim2.new(0.5, -110, 0.5, -150), Color3.fromHex("C9C6DC"), 0)
-corner(moonBox, 110)
-moonBox.Visible = false
-local grad = Instance.new("UIGradient")
-grad.Parent = moonBox
+-- 16-nov: versión 3D (la del "si sobra tiempo"). La Luna es una esfera con mares y cráteres dentro de un
+-- ViewportFrame. Los ViewportFrame no muestran PointLight, así que la "luz que cruza" es la luz del propio
+-- ViewportFrame: su dirección va de izquierda a derecha en 3 s y su color es el del rol que decidió.
+local moonView = Instance.new("ViewportFrame")
+moonView.Name = "MoonLight"
+moonView.Size = UDim2.fromOffset(260, 260)
+moonView.Position = UDim2.new(0.5, -130, 0.5, -170)
+moonView.BackgroundTransparency = 1
+moonView.Ambient = Color3.fromRGB(70, 66, 96) -- el lado oscuro se ve un poco (sigue pareciendo la Luna)
+moonView.Visible = false
+moonView.Parent = gui
+local moonCam = Instance.new("Camera")
+moonCam.FieldOfView = 40
+moonCam.CFrame = CFrame.lookAt(Vector3.new(0, 0, 31), Vector3.zero)
+moonCam.Parent = moonView
+moonView.CurrentCamera = moonCam
+
+local moonModel = Instance.new("Model")
+moonModel.Name = "Moon"
+do
+	local R = 10
+	local function part(size: Vector3, cf: CFrame, color: Color3, mat: Enum.Material): BasePart
+		local p = Instance.new("Part")
+		p.Size = size
+		p.CFrame = cf
+		p.Color = color
+		p.Material = mat
+		p.Anchored = true
+		p.Parent = moonModel
+		return p
+	end
+	local sphere = part(Vector3.new(R * 2, R * 2, R * 2), CFrame.new(), Color3.fromRGB(196, 192, 206), Enum.Material.Slate)
+	sphere.Shape = Enum.PartType.Ball
+	moonModel.PrimaryPart = sphere
+	-- Mancha pegada a la curva de la Luna (elipsoide aplanado): mares y cráteres
+	local function patch(lat: number, lon: number, w: number, color: Color3, raise: number)
+		local n = Vector3.new(math.cos(lat) * math.sin(lon), math.sin(lat), math.cos(lat) * math.cos(lon))
+		local sag = w * w / (8 * R)
+		local pos = n * (R - sag + raise)
+		local p = part(Vector3.new(w, 2 * sag + 0.16, w), CFrame.lookAt(pos, pos + n) * CFrame.Angles(-math.pi / 2, 0, 0), color, Enum.Material.SmoothPlastic)
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = p
+	end
+	local seed = Random.new(7)
+	for _ = 1, 12 do
+		patch(math.asin(seed:NextNumber(-0.95, 0.9)), seed:NextNumber(-math.pi, math.pi), seed:NextNumber(4, 8), Color3.fromRGB(150, 146, 170), 0)
+	end
+	for _ = 1, 40 do
+		local lat, lon = math.asin(seed:NextNumber(-1, 1)), seed:NextNumber(-math.pi, math.pi)
+		local w = seed:NextNumber(0.6, 2.4)
+		patch(lat, lon, w * 1.3, Color3.fromRGB(212, 209, 224), 0.03)
+		patch(lat, lon, w, Color3.fromRGB(136, 132, 156), 0.06)
+	end
+end
+moonModel.Parent = moonView
 
 local function PlayMoonLight(color: Color3)
-	grad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromHex("8E89A8")),
-		ColorSequenceKeypoint.new(0.45, Color3.fromHex("8E89A8")),
-		ColorSequenceKeypoint.new(0.5, color),
-		ColorSequenceKeypoint.new(0.55, Color3.fromHex("8E89A8")),
-		ColorSequenceKeypoint.new(1, Color3.fromHex("8E89A8")),
-	})
-	grad.Offset = Vector2.new(-1, 0)
-	moonBox.Visible = true
-	local tw = TweenService:Create(grad, TweenInfo.new(Config.Phase3.LightTime, Enum.EasingStyle.Sine), { Offset = Vector2.new(1, 0) })
+	moonView.LightColor = color:Lerp(Color3.new(1, 1, 1), 0.35) -- color del rol, aclarado para que se vean los cráteres
+	moonView.LightDirection = Vector3.new(1, -0.1, -0.15) -- la luz entra por la izquierda (apunta a la derecha)
+	moonModel:PivotTo(CFrame.Angles(0.25, 0, 0))
+	moonView.Visible = true
+	local t = Config.Phase3.LightTime
+	-- La luz barre la Luna de izquierda a derecha y la Luna gira un poco
+	local tw = TweenService:Create(moonView, TweenInfo.new(t, Enum.EasingStyle.Sine), { LightDirection = Vector3.new(-1, -0.1, -0.15) })
 	tw:Play()
-	tw.Completed:Wait()
-	moonBox.Visible = false
+	local t0 = os.clock()
+	while os.clock() - t0 < t do
+		moonModel:PivotTo(CFrame.Angles(0.25, (os.clock() - t0) / t * 0.8, 0))
+		RunService.RenderStepped:Wait()
+	end
+	moonView.Visible = false
 end
 
 Remotes.MoonLight.OnClientEvent:Connect(function(role)
@@ -336,7 +390,7 @@ local function helpedLines(): { string }
 		half_buried = GS:GetAttribute("Spot_cap") == "half_buried",
 		cargo = GS:GetAttribute("CargoArrived") == true,
 		power = (GS:GetAttribute("EnergyUsed") or 0) <= (GS:GetAttribute("EnergyMade") or 0),
-		recycler = GS:GetAttribute("Choice_life") == "recycler",
+		recycler = GS:GetAttribute("Choice_life") == "recycler" and GS:GetAttribute("MissionComplete_life") == true, -- PDF: "reciclador al 100 %"
 		trays = (GS:GetAttribute("Choice_bot") ~= "packaged") and GS:GetAttribute("Spot_bot") ~= "inside_habitat",
 		protected = GS:GetAttribute("MissionComplete_eng") == true,
 		repaired = not (GS:GetAttribute("Damaged_cap") or GS:GetAttribute("Damaged_eng") or GS:GetAttribute("Damaged_life") or GS:GetAttribute("Damaged_bot")),

@@ -19,6 +19,22 @@ local folder = Instance.new("Folder")
 folder.Name = "SO_Sounds"
 folder.Parent = SoundService
 
+-- [15-nov] Dos grupos para el menú de opciones (SettingsMenu): música y efectos.
+-- El volumen elegido llega como atributo del jugador (Opt_Music / Opt_SFX, de 0 a 1).
+local musicGroup = Instance.new("SoundGroup")
+musicGroup.Name = "SO_MusicGroup"
+musicGroup.Parent = SoundService
+local sfxGroup = Instance.new("SoundGroup")
+sfxGroup.Name = "SO_SFXGroup"
+sfxGroup.Parent = SoundService
+local function applyVolumes()
+	musicGroup.Volume = player:GetAttribute("Opt_Music") or 1
+	sfxGroup.Volume = player:GetAttribute("Opt_SFX") or 1
+end
+player:GetAttributeChangedSignal("Opt_Music"):Connect(applyVolumes)
+player:GetAttributeChangedSignal("Opt_SFX"):Connect(applyVolumes)
+applyVolumes()
+
 local function make(name: string, looped: boolean?): Sound
 	local info = S[name]
 	local s = Instance.new("Sound")
@@ -26,6 +42,7 @@ local function make(name: string, looped: boolean?): Sound
 	s.SoundId = "rbxassetid://" .. info.Id
 	s.Volume = info.Volume
 	s.Looped = looped == true
+	s.SoundGroup = (name == "EarthMusic" or name == "MoonMusic") and musicGroup or sfxGroup
 	s.Parent = folder
 	return s
 end

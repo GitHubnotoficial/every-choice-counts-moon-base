@@ -18,7 +18,8 @@ local P3 = Config.Phase3
 
 local site = workspace:WaitForChild("MoonSite")
 local MODS = { "Mod_O2Mult", "Mod_RadOutMult", "Mod_HabitatNoDrop", "Mod_GreenhouseOff", "Mod_MachineOff",
-	"Mod_ExtraEnergy", "Mod_TraysNoGrow", "Mod_SlowWalk", "Mod_MachineMult", "Mod_WalkMinus" } -- 15-nov: +2 (PDF Fase 3)
+	"Mod_ExtraEnergy", "Mod_TraysNoGrow", "Mod_SlowWalk", "Mod_MachineMult", "Mod_WalkMinus",
+	"Mod_HabitatRadMult" } -- 15-nov: +2 (PDF Fase 3) · 16-nov: +Mod_HabitatRadMult (hábitat ×0,5)
 -- Efectos que duran más de un día: se borran al empezar una partida nueva (día 1) y al salir de la Fase 3
 local LONG_MODS = { "MachineProdMult", "CargoDayOverride", "NextWalkMinus", "HasReadyTray" }
 
@@ -26,12 +27,12 @@ local byId = {}
 for _, e in LIST do byId[e.Id] = e end
 
 local lastId = ""
+local lastDay = 0 -- 16-nov: día en que salió lastId (la regla es "no dos días SEGUIDOS")
 local quietStreak = 0
 -- Para el día 7 (PDF 6.2): apagones y respuestas C por rol
 local hadBlackout: { [string]: boolean } = {}
 local answeredC: { [string]: boolean } = {}
 local BLACKOUT_ROLE = { greenhouse = "bot", machine = "life", habitat = "cap" }
-local forced: string? = nil
 local answer: { letter: string, role: string }? = nil
 local pointsFolder = Instance.new("Folder")
 pointsFolder.Name = "EmergencyPoints"
@@ -572,12 +573,16 @@ local CONDITIONS = {
 	has_reactor = function() return GS:GetAttribute("Choice_eng") == "reactor" end,
 	has_tanks = function() return GS:GetAttribute("Choice_life") == "tanks" end,
 	packaged_outside = function() return GS:GetAttribute("Choice_bot") == "packaged" and GS:GetAttribute("Spot_bot") ~= "inflatable" end,
-	contact_ok = function() return GS:GetAttribute("NextChooseTime") == nil end, -- si ya no hay contacto, no sale "sin contacto"
+	-- si el contacto ya está perdido (10 s) o a medias (15 s), no sale "sin contacto". 16-nov: con el contacto
+	-- recuperado (20 s, respuesta A de la llamarada) sí puede salir.
+	contact_ok = function() return (GS:GetAttribute("NextChooseTime") or P3.ChooseTime) >= P3.ChooseTime end,
 }
 
+-- ¿Algún vivo tiene el rol o su cinturón? (16-nov: antes no miraba los cinturones y elegía cualquiera)
 local function roleHasAlivePlayer(role: string): boolean
 	for _, p in Players:GetPlayers() do
-		if not p:GetAttribute("Dead") and string.find("," .. (p:GetAttribute("Roles") or "") .. ",", "," .. role .. ",", 1, true) then
+		local mine = "," .. (p:GetAttribute("Roles") or "") .. "," .. (p:GetAttribute("Belts") or "") .. ","
+		if not p:GetAttribute("Dead") and string.find(mine, "," .. role .. ",", 1, true) then
 			return true
 		end
 	end
@@ -846,6 +851,7 @@ local EFFECTS = {
 	supply_wall = function()
 		GS:SetAttribute("ReserveWater", math.max(0, (GS:GetAttribute("ReserveWater") or 0) - 10))
 		addFood(-0.5)
+		GS:SetAttribute("Mod_HabitatRadMult", 0.5) -- 16-nov: dentro del hábitat el multiplicador es ×0,5 (PDF)
 	end,
 	rad_out_2_nodrop = function()
 		GS:SetAttribute("Mod_RadOutMult", 2)
@@ -855,9 +861,11 @@ local EFFECTS = {
 	mold_spread = function()
 		local day = GS:GetAttribute("Day")
 		task.spawn(function()
-			while GS:GetAttribute("Day") == day and GS:GetAttribute("Phase") == "Phase3" and #trays() > 0 do
-				loseTrays(1)
+				-- 16-nov: 1 bandeja cada 30 s (antes quitaba una en el acto)
+			while true do
 				task.wait(30)
+				if GS:GetAttribute("Day") ~= day or GS:GetAttribute("Phase") ~= "Phase3" or #trays() == 0 then break end
+				loseTrays(1)
 			end
 		end)
 	end,
@@ -873,6 +881,7 @@ local EFFECTS = {
 	rad_storm_b = function()
 		local h = GS:GetAttribute("Spot_cap") == "half_buried" and 0.5 or 1
 		GS:SetAttribute("Mod_RadOutMult", 2 * h)
+		GS:SetAttribute("Mod_HabitatRadMult", 0.5) -- 16-nov: dentro del hábitat el multiplicador es ×0,5 (PDF)
 	end,
 	rad_storm_c = function()
 		local h = GS:GetAttribute("Spot_cap") == "half_buried" and 0.5 or 1
@@ -999,10 +1008,8 @@ local function weightedPick(list)
 end
 
 local function rollDay(day: number)
-	if forced then
-		local e = byId[forced]; forced = nil
-		return e
-	end
+	-- 16-nov: la de ayer no puede repetirse hoy; si hubo días tranquilos en medio, sí
+	if lastDay ~= day - 1 then lastId = "" end
 	local list = candidates()
 	if #list == 0 then return nil end
 	if day == P3.Days then
@@ -1040,6 +1047,13 @@ end
 ---------------------------------------------------------------------
 -- Correr una emergencia
 ---------------------------------------------------------------------
+-- 16-nov: la emergencia pertenece a un día. Si el día cambia (o termina la fase) se corta sin efecto;
+-- antes el efecto "de ese día" caía en el día siguiente.
+local emDay = 0
+local function stillOn(): boolean
+	return GS:GetAttribute("Phase") == "Phase3" and GS:GetAttribute("Day") == emDay
+end
+
 local function countdown(stage: string, seconds: number, doneWhen: () -> boolean): boolean
 	GS:SetAttribute("EmergencyStage", stage)
 	local left = seconds
@@ -1049,7 +1063,7 @@ local function countdown(stage: string, seconds: number, doneWhen: () -> boolean
 		task.wait(0.25)
 		left -= 0.25
 		GS:SetAttribute("EmergencyLeft", math.ceil(left))
-		if GS:GetAttribute("Phase") ~= "Phase3" then return false end
+		if not stillOn() then return false end
 	end
 	return doneWhen()
 end
@@ -1060,10 +1074,10 @@ local function clearEmergency()
 	pointsFolder:ClearAllChildren()
 end
 
-local function finish(e, letter: string, chooserRole: string, toast: string)
+local function finish(e, letter: string, chooserRole: string, toast: string, noLight: boolean?)
 	-- Arreglo 15-nov: si la Fase 3 ya terminó (murió la tripulación o se ganó), no mostrar avisos ni datos
 	-- encima de la pantalla final.
-	if GS:GetAttribute("Phase") ~= "Phase3" then
+	if not stillOn() then
 		clearEmergency()
 		return
 	end
@@ -1071,8 +1085,11 @@ local function finish(e, letter: string, chooserRole: string, toast: string)
 	GS:SetAttribute("EmergencyChoice", letter)
 	GS:SetAttribute("EmergencyChooser", chooserRole)
 	GS:SetAttribute("EmergencyStage", "result")
-	Remotes.MoonLight:FireAllClients(chooserRole ~= "" and chooserRole or "none")
-	task.wait(P3.LightTime)
+	-- 16-nov: PROTECTED no tiene luz (nadie decidió nada)
+	if not noLight then
+		Remotes.MoonLight:FireAllClients(chooserRole ~= "" and chooserRole or "none")
+		task.wait(P3.LightTime)
+	end
 	Remotes.Toast:FireAllClients(toast, P3.ResultToast)
 	Remotes.Fact:FireAllClients(e.Fact)
 	task.wait(P3.ResultToast)
@@ -1083,6 +1100,8 @@ end
 
 local function runEmergency(e)
 	lastId = e.Id
+	emDay = GS:GetAttribute("Day") or 0
+	lastDay = emDay
 	GS:SetAttribute("EmergenciesSeen", (GS:GetAttribute("EmergenciesSeen") or 0) + 1)
 	GS:SetAttribute("EmergencyChoice", "")
 	GS:SetAttribute("EmergencyChooser", "")
@@ -1093,7 +1112,7 @@ local function runEmergency(e)
 		GS:SetAttribute("EmergencyStage", "protected")
 		task.wait(6)
 		GS:SetAttribute("EmergenciesSolved", (GS:GetAttribute("EmergenciesSolved") or 0) + 1)
-		finish(e, "", e.Role, Config.Text3.Protected)
+		finish(e, "", e.Role, Config.Text3.Protected .. ": " .. (e.ProtectedNote or "your base was ready"), true)
 		return
 	end
 
@@ -1120,8 +1139,8 @@ local function runEmergency(e)
 	GS:SetAttribute("NextChooseTime", nil)
 	countdown("choose", chooseTime, function() return answer ~= nil end)
 	local picked = answer
-	if GS:GetAttribute("Phase") ~= "Phase3" then
-		clearEmergency() -- la fase terminó mientras se elegía: no aplicar efectos
+	if not stillOn() then
+		clearEmergency() -- la fase o el día terminaron mientras se elegía: no aplicar efectos
 		return
 	end
 	if not picked then
@@ -1167,7 +1186,7 @@ local function runEmergency(e)
 			end
 		end
 		local ok = countdown("execute", P3.ExecuteTime, function() return done >= need end)
-		if GS:GetAttribute("Phase") ~= "Phase3" then
+		if not stillOn() then
 			clearEmergency()
 			return
 		end
@@ -1242,7 +1261,10 @@ GS:GetAttributeChangedSignal("Day"):Connect(function()
 		return
 	end
 	quietStreak = 0
-	local at = math.random(P3.EmergencyWindow[1], P3.EmergencyWindow[2])
+	-- 16-nov: que la emergencia completa (elegir + ejecutar + luz + aviso) quepa en el día. Antes podía salir en el
+	-- segundo 80 y durar 67 s más, pasando al día siguiente. Con días de 120 s queda entre el 20 y el 53.
+	local latest = P3.DayLength - (P3.ChooseTime + P3.ExecuteTime + P3.LightTime + P3.ResultToast)
+	local at = math.random(P3.EmergencyWindow[1], math.max(P3.EmergencyWindow[1], math.min(P3.EmergencyWindow[2], latest)))
 	task.spawn(function()
 		while GS:GetAttribute("Day") == day and GS:GetAttribute("Phase") == "Phase3"
 			and (P3.DayLength - (GS:GetAttribute("DayTimeLeft") or 0)) < at do

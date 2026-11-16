@@ -13,6 +13,7 @@
 --          Agranda y mueve MoonSite.ChosenLander; esconde la rampa vieja de la nave en la Fase 2.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
 local P1 = require(ReplicatedStorage:WaitForChild("Phase1Config"))
@@ -104,7 +105,8 @@ local function doRefill(p: Player)
 	end
 	if GS:GetAttribute("Phase") == "Phase3" then
 		-- En la Fase 3 sale de la reserva compartida (1 % de barra = RefillCost % de reserva)
-		local cost = Config.Reserve.RefillCost
+		local byN = Config.Reserve.RefillCostByPlayers -- 16-nov: costo según cuántos jugadores hay
+		local cost = byN and byN[math.clamp(#Players:GetPlayers(), 1, #byN)] or Config.Reserve.RefillCost
 		local rO2, rW = GS:GetAttribute("ReserveO2") or 0, GS:GetAttribute("ReserveWater") or 0
 		needO2 = math.min(needO2, rO2 / cost)
 		needWater = math.min(needWater, rW / cost)
@@ -137,7 +139,8 @@ local function refillOne(p: Player, kind: string)
 	end
 	if GS:GetAttribute("Phase") == "Phase3" then
 		local key = kind == "O2" and "ReserveO2" or "ReserveWater"
-		local cost = Config.Reserve.RefillCost
+		local byN = Config.Reserve.RefillCostByPlayers -- 16-nov: costo según cuántos jugadores hay
+		local cost = byN and byN[math.clamp(#Players:GetPlayers(), 1, #byN)] or Config.Reserve.RefillCost
 		local r = GS:GetAttribute(key) or 0
 		need = math.min(need, r / cost)
 		if need < 1 then

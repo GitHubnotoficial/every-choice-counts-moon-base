@@ -44,6 +44,52 @@ Config.CampusSigns = {
 	Visitors = "VISITOR CENTER",
 }
 
+-- [15-nov] Extras: huellas en la Luna, gestos, celebraciones, opciones (volumen y texto grande) y créditos
+Config.Extras = {
+	Footprints = {
+		Step = 2.2, -- studs entre una huella y la siguiente
+		Life = 40, -- segundos que dura cada huella
+		Max = 300, -- huellas a la vez en pantalla (las más viejas se borran)
+		MoonX = 1500, -- a partir de esta X estamos en la Luna
+	},
+	EmoteCooldown = 2.5, -- segundos entre gestos
+	EmoteShow = 2.5, -- segundos que se ve el globo sobre la cabeza
+	BigTextScale = 1.25, -- "texto grande" multiplica el tamaño de letra
+	ConfettiCount = 70,
+	Text = {
+		Wave = "Wave",
+		Point = "Point",
+		WaveIcon = "👋",
+		PointIcon = "👉",
+		Settings = "Settings",
+		Music = "Music",
+		Effects = "Sound effects",
+		BigText = "Big text",
+		On = "ON",
+		Off = "OFF",
+		Credits = "Credits",
+		Close = "Close",
+		MissionDone = "%s mission complete!",
+		PhaseDone = "Phase complete! Great teamwork!",
+		Win = "You did it! The base survived!",
+		CreditsTitle = "Every Choice Counts: Moon Base",
+		TeamTitle = "Our team",
+		SourcesTitle = "Where the science comes from",
+		Thanks = "Made for the NASA Space Apps Challenge 2026. Thanks for playing!",
+	},
+	-- PENDIENTE: el equipo debe completar estas listas (nombres y fuentes reales que usaron)
+	Credits = {
+		Team = {
+			"Leticia",
+			"Isaac",
+			"Celeste",
+		},
+		Sources = {
+			"(add the sources of the science facts here)",
+		},
+	},
+}
+
 -- Tiempos (segundos)
 Config.Times = {
 	RoleSelect = 30, -- elección de rol (2D)
@@ -434,6 +480,11 @@ Config.BarRates = {
 -- Reserva de la base (compartida). Recargar 1 % de la barra gasta RefillCost % de la reserva.
 Config.Reserve = {
 	RefillCost = 0.35,
+	-- 16-nov (ajuste tras simular las combinaciones extremas del PDF Fase 3, cap. 10): la reserva es una sola
+	-- para todo el equipo, así que con más jugadores se vaciaba mucho antes. Con 0,35 fijo, "tanques + balizas"
+	-- perdía siempre con 2 a 4 jugadores (el PDF dice que la nave del día 4 debe salvarlos). Costo según
+	-- cuántos jugadores hay en el servidor (1, 2, 3, 4):
+	RefillCostByPlayers = { 0.35, 0.30, 0.25, 0.20 },
 	Machines = {
 		recycler = { Start = 50, O2 = 45, Water = 55 },
 		electrolyzer = { Start = 70, O2 = 50, Water = 20 },
@@ -506,7 +557,7 @@ Config.Text3 = {
 	WhyNoWater = "You went %d s without water.",
 	DeathTip = "TIP: when a bar gets low, go back to the lander and hold E to refill.",
 	WhyLostTitle = "WHY YOU LOST",
-	WhyPlayer = "✗ %s ran out of %s. %s",
+	WhyPlayer = "• %s ran out of %s. %s",
 	WhyTeamReserve = "✗ The base reserve ran out of %s.",
 	WhyTeamFood = "✗ The food ran out, so everyone moved slower.",
 }
@@ -603,6 +654,19 @@ Config.MoonSky = {
 	EarthDir = Vector3.new(0.36, 0.1, 0.93).Unit, -- ~6° sobre el horizonte
 	EarthDist = 1200, -- studs desde la cámara (la Tierra sigue a la cámara: siempre "infinitamente" lejos)
 	EarthRadius = 20,
+}
+
+-- Carteles flotantes de la Luna (SO_WorldLabels): menos intrusivos, como en los juegos buenos de Roblox
+Config.WorldLabels = {
+	PixelsPerStud = 32, -- rótulos de información: 120 px de ancho → 3,75 studs (letrero real en el mundo)
+	Near = 22, -- hasta aquí se ven normal (studs)
+	Far = 40, -- desde Near se desvanecen; más lejos no se ven
+	NavNear = 25, -- marcadores de navegación (AlwaysOnTop): tamaño completo hasta aquí
+	NavFar = 90, -- a esta distancia ya están en su tamaño mínimo
+	NavMinScale = 0.5, -- tamaño mínimo de lejos (50 %)
+	NavFarFade = 0.35, -- de lejos se aclaran un poco (0 = igual, 1 = invisibles)
+	NavMaxDistance = 260, -- más lejos ni se dibujan
+	MinBackground = 0.3, -- fondo al menos 30 % transparente
 }
 
 -- "Did you know?" en la pantalla entre la Fase 2 y la 3 y en la pantalla final (SO_DidYouKnow). Solo datos con fuente NASA.
