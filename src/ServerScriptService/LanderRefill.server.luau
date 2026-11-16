@@ -201,6 +201,106 @@ local function cleanPrompts()
 	end
 end
 
+---------------------------------------------------------------------
+-- [15-nov] Detalles para que el cuarto y la base se vean acogedores: ventana con la Tierra, estante con cajas,
+-- cables y lucecitas de colores (MoonAmbient las hace parpadear con el atributo AnimBlink).
+---------------------------------------------------------------------
+-- Ventana con vista al espacio y la Tierra. La cara Front de la pieza mira hacia adentro.
+local function earthWindow(parent: Instance, cf: CFrame, w: number, h: number)
+	part(parent, "WindowFrame", Vector3.new(w + 0.5, h + 0.5, 0.12), cf, DARK, nil, false)
+	local win = part(parent, "SpaceWindow", Vector3.new(w, h, 0.16), cf, Color3.new(0, 0, 0), Enum.Material.SmoothPlastic, false)
+	local g = Instance.new("SurfaceGui")
+	g.Face = Enum.NormalId.Front
+	g.LightInfluence = 0
+	g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	g.PixelsPerStud = 60
+	local bg = Instance.new("Frame")
+	bg.Size = UDim2.fromScale(1, 1)
+	bg.BackgroundColor3 = Color3.fromRGB(6, 6, 22)
+	bg.BorderSizePixel = 0
+	bg.Parent = g
+	local rng = Random.new(8)
+	for _ = 1, 26 do
+		local s = Instance.new("Frame")
+		local px = rng:NextInteger(2, 4)
+		s.Size = UDim2.fromOffset(px, px)
+		s.Position = UDim2.fromScale(rng:NextNumber(), rng:NextNumber())
+		s.BackgroundColor3 = Color3.new(1, 1, 1)
+		s.BackgroundTransparency = rng:NextNumber(0, 0.5)
+		s.BorderSizePixel = 0
+		s.Parent = bg
+	end
+	local earth = Instance.new("Frame")
+	earth.AnchorPoint = Vector2.new(0.5, 0.5)
+	earth.Position = UDim2.fromScale(0.66, 0.42)
+	earth.Size = UDim2.fromScale(0.5, 0.5)
+	earth.BackgroundColor3 = Color3.fromRGB(46, 112, 220)
+	earth.BorderSizePixel = 0
+	local ar = Instance.new("UIAspectRatioConstraint")
+	ar.Parent = earth
+	local ec = Instance.new("UICorner")
+	ec.CornerRadius = UDim.new(1, 0)
+	ec.Parent = earth
+	local es = Instance.new("UIStroke")
+	es.Color = Color3.fromRGB(150, 210, 255)
+	es.Thickness = 4
+	es.Transparency = 0.3
+	es.Parent = earth
+	for _, l in { { 0.3, 0.35, 0.35, 0.25 }, { 0.62, 0.62, 0.3, 0.22 }, { 0.55, 0.2, 0.18, 0.14 } } do
+		local land = Instance.new("Frame")
+		land.Position = UDim2.fromScale(l[1], l[2])
+		land.Size = UDim2.fromScale(l[3], l[4])
+		land.AnchorPoint = Vector2.new(0.5, 0.5)
+		land.BackgroundColor3 = Color3.fromRGB(86, 170, 90)
+		land.BorderSizePixel = 0
+		local lc = Instance.new("UICorner")
+		lc.CornerRadius = UDim.new(1, 0)
+		lc.Parent = land
+		land.Parent = earth
+	end
+	earth.Parent = bg
+	g.Parent = win
+end
+
+-- Estante pegado a una pared (a lo largo de X) con cajitas de colores
+local function shelf(parent: Instance, cf: CFrame, w: number)
+	local COLS = { Color3.fromRGB(240, 150, 50), Color3.fromRGB(90, 130, 210), Color3.fromRGB(80, 190, 120), Color3.fromRGB(230, 80, 90), WHITE }
+	local rng = Random.new(3)
+	for _, s in { -1, 1 } do
+		part(parent, "ShelfSide", Vector3.new(0.15, 5, 1), cf * CFrame.new(s * w / 2, 2.5, 0), METAL, nil, false)
+	end
+	for _, y in { 1.2, 2.7, 4.2 } do
+		part(parent, "ShelfBoard", Vector3.new(w, 0.15, 1), cf * CFrame.new(0, y, 0), METAL, nil, false)
+		local x = -w / 2 + 0.4
+		while x < w / 2 - 0.6 do
+			local bw = rng:NextNumber(0.5, 0.9)
+			local bh = rng:NextNumber(0.5, 1.1)
+			part(parent, "ShelfBox", Vector3.new(bw, bh, 0.7), cf * CFrame.new(x + bw / 2, y + 0.08 + bh / 2, 0), COLS[rng:NextInteger(1, #COLS)], nil, false)
+			x += bw + rng:NextNumber(0.1, 0.3)
+		end
+	end
+end
+
+-- Panel con lucecitas de colores que parpadean (la cara Front mira hacia adentro)
+local function lightPanel(parent: Instance, cf: CFrame)
+	local COLS = { Color3.fromRGB(255, 70, 70), Color3.fromRGB(80, 230, 120), Color3.fromRGB(255, 190, 60), SKY }
+	local rng = Random.new(11)
+	part(parent, "LightPanel", Vector3.new(2.2, 1.8, 0.12), cf, DARK, nil, false)
+	for i = 0, 2 do
+		for j = 0, 2 do
+			local l = part(parent, "PanelLight", Vector3.new(0.35, 0.35, 0.1), cf * CFrame.new(-0.6 + i * 0.6, -0.5 + j * 0.5, -0.08),
+				COLS[rng:NextInteger(1, #COLS)], Enum.Material.Neon, false)
+			l:SetAttribute("AnimBlink", rng:NextNumber(0.5, 2.2))
+		end
+	end
+end
+
+-- Cable entre dos puntos
+local function cable(parent: Instance, a: Vector3, b: Vector3, color: Color3)
+	local len = (b - a).Magnitude
+	part(parent, "Cable", Vector3.new(0.18, 0.18, len), CFrame.lookAt((a + b) / 2, b), color, Enum.Material.SmoothPlastic, false)
+end
+
 local function floorCF(): CFrame
 	-- El pivote de la nave está sobre la plataforma
 	return CFrame.new(lander:GetPivot().Position)
@@ -271,6 +371,16 @@ local function buildRoom(ship: Model)
 	-- tanques al fondo
 	tank(room, "O2", c * CFrame.new(-hx + 1.8, 0.4, -2.6))
 	tank(room, "Water", c * CFrame.new(-hx + 1.8, 0.4, 2.6))
+	-- detalles acogedores (15-nov)
+	earthWindow(room, c * CFrame.new(2, 4.2, hz - 0.05), 3.2, 2.2)
+	shelf(room, c * CFrame.new(-1.6, 0.4, hz - 0.6), 2.6)
+	lightPanel(room, c * CFrame.new(-2.8, 4, -hz + 0.08) * CFrame.Angles(0, math.pi, 0))
+	cable(room, (c * CFrame.new(-hx + 0.2, RH - 0.3, -hz + 0.3)).Position, (c * CFrame.new(hx - 0.2, RH - 0.3, -hz + 0.3)).Position, Color3.fromRGB(240, 150, 50))
+	cable(room, (c * CFrame.new(-hx + 0.2, RH - 0.5, -hz + 0.3)).Position, (c * CFrame.new(hx - 0.2, RH - 0.5, -hz + 0.3)).Position, Color3.fromRGB(90, 130, 210))
+	for _, z in { -2.6, 2.6 } do
+		cable(room, (c * CFrame.new(-hx + 0.25, RH - 0.3, z)).Position, (c * CFrame.new(-hx + 0.25, 3, z)).Position, DARK)
+		cable(room, (c * CFrame.new(-hx + 0.25, 3, z)).Position, (c * CFrame.new(-hx + 1.2, 3, z)).Position, DARK)
+	end
 
 	-- pasillo desde la puerta hasta el borde de la nave
 	local x0 = hx + 0.6
@@ -391,6 +501,22 @@ local function buildBase(parent: Instance)
 	part(m, "Bench", Vector3.new(5, 1.2, 1.6), c * CFrame.new(1.5, 1.1, -hw + 1.6), Color3.fromRGB(90, 110, 160), nil, true)
 	part(m, "Console", Vector3.new(4, 2.6, 1.2), c * CFrame.new(1.5, 1.8, hw - 1.4), Color3.fromRGB(70, 78, 96), nil, true)
 	part(m, "ConsoleGlow", Vector3.new(3.4, 1, 0.1), c * CFrame.new(1.5, 2.6, hw - 2.05), Color3.fromRGB(70, 190, 255), Enum.Material.Neon, false)
+	-- detalles acogedores (15-nov)
+	local inner = hw - 0.62
+	earthWindow(m, c * CFrame.new(6.2, 4.6, inner), 2.4, 2.2)
+	shelf(m, c * CFrame.new(-3.2, 0.5, -inner + 0.55), 2.6)
+	lightPanel(m, c * CFrame.new(6, 4, -inner) * CFrame.Angles(0, math.pi, 0))
+	cable(m, (c * CFrame.new(-hl + 0.7, 7.1, -inner + 0.2)).Position, (c * CFrame.new(hl - 0.7, 7.1, -inner + 0.2)).Position, Color3.fromRGB(240, 150, 50))
+	cable(m, (c * CFrame.new(-hl + 0.7, 6.9, -inner + 0.2)).Position, (c * CFrame.new(hl - 0.7, 6.9, -inner + 0.2)).Position, Color3.fromRGB(90, 130, 210))
+	for _, z in { -2.6, 2.6 } do
+		cable(m, (c * CFrame.new(-hl + 0.9, 7.1, z)).Position, (c * CFrame.new(-hl + 0.9, 3, z)).Position, DARK)
+		cable(m, (c * CFrame.new(-hl + 0.9, 3, z)).Position, (c * CFrame.new(-hl + 1.7, 3, z)).Position, DARK)
+	end
+	for _, w in m:GetChildren() do
+		if w.Name == "Window" then
+			w:SetAttribute("NightWindow", true) -- MoonAmbient las ilumina de noche
+		end
+	end
 	-- cartel arriba
 	local sign = part(m, "SignAnchor", Vector3.new(0.2, 0.2, 0.2), c * CFrame.new(hl + 1, 9.5, 0), WHITE, nil, false, { Transparency = 1 })
 	billboard(sign, T.TempBaseSign, SKY, Vector3.new(0, 1.5, 0), 220)

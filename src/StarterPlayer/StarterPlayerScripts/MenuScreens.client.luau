@@ -463,7 +463,8 @@ label(tagPill, { Text = Config.Text.BriefingTag, Font = Enum.Font.GothamBlack, T
 -- Tarjeta blanca con encabezado de color
 local function briefCard(i: number, title: string, color: Color3, dark: boolean): Frame
 	local x = 64 + (i - 1) * (368 + 24)
-	local card = new("Frame", { Position = UDim2.fromOffset(x, 126), Size = UDim2.fromOffset(368, 432), BackgroundColor3 = C.Text }, B)
+	-- 15-nov: más bajas (antes 432) para que entre la cadena del equipo debajo
+	local card = new("Frame", { Position = UDim2.fromOffset(x, 126), Size = UDim2.fromOffset(368, 352), BackgroundColor3 = C.Text }, B)
 	corner(card, 22)
 	local head = cardHead(card, 70, color, 22)
 	label(head, { Text = title, Font = Enum.Font.FredokaOne, TextSize = 26, TextColor3 = dark and INK or C.Text, Position = UDim2.fromOffset(24, 0), Size = UDim2.new(1, -48, 1, 0), TextXAlignment = Enum.TextXAlignment.Left })
@@ -525,6 +526,57 @@ local w1 = cut and string.sub(watch, 1, cut - 1) or watch
 local w2 = cut and string.sub(watch, cut + 1) or ""
 para(watchBody, 1, (string.gsub(w1, "(too heavy)", redText)), 18)
 para(watchBody, 2, (string.gsub(w2, "(%d+ seconds)", redText)), 18)
+
+-- [15-nov] Cadena del equipo: el Engineer da energía → Life Support hace aire y agua → el Botanist cultiva comida;
+-- el Captain protege a todos. El rol del jugador se marca con "YOU". Textos en Config.Extras.Chain.
+local CH = Config.Extras.Chain
+local chainBox = new("Frame", { Position = UDim2.fromOffset(64, 490), Size = UDim2.fromOffset(1152, 92), BackgroundColor3 = Color3.fromHex("2A1C6E") }, B)
+corner(chainBox, 18)
+label(chainBox, { Text = CH.Title, Font = Enum.Font.GothamBlack, TextSize = 14, TextColor3 = C.Gold, Position = UDim2.fromOffset(18, 4), Size = UDim2.fromOffset(600, 22), TextXAlignment = Enum.TextXAlignment.Left })
+local chainChips: { [string]: Frame } = {}
+local function chainChip(role: string, x: number, w: number)
+	local info = Config.Roles[role]
+	local chip = new("Frame", { Position = UDim2.fromOffset(x, 30), Size = UDim2.fromOffset(w, 52), BackgroundColor3 = C.Text }, chainBox)
+	corner(chip, 14)
+	new("UIStroke", { Color = info.Color, Thickness = 3, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, chip)
+	label(chip, { Text = CH[role].Icon, TextSize = 28, Position = UDim2.fromOffset(8, 0), Size = UDim2.fromOffset(40, 52) })
+	label(chip, { Text = info.Name, Font = Enum.Font.FredokaOne, TextSize = 19, TextColor3 = P1.RoleDark[role] or INK, Position = UDim2.fromOffset(52, 5), Size = UDim2.new(1, -58, 0, 22), TextXAlignment = Enum.TextXAlignment.Left })
+	label(chip, { Text = CH[role].What, Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = INK, TextWrapped = true, Position = UDim2.fromOffset(52, 26), Size = UDim2.new(1, -58, 0, 22), TextXAlignment = Enum.TextXAlignment.Left })
+	local you = label(chip, { Text = CH.You, Font = Enum.Font.GothamBlack, TextSize = 12, TextColor3 = INK, BackgroundTransparency = 0, BackgroundColor3 = C.Gold,
+		AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 6, 0, -10), Size = UDim2.fromOffset(40, 18), Visible = false })
+	corner(you, 9)
+	chainChips[role] = chip
+	return chip
+end
+local function chainArrow(x: number, text: string?)
+	label(chainBox, { Text = "➜", Font = Enum.Font.GothamBlack, TextSize = 28, TextColor3 = C.Gold, Position = UDim2.fromOffset(x, 40), Size = UDim2.fromOffset(44, 34) })
+	if text then
+		label(chainBox, { Text = text, Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Color3.fromHex("DCD2FF"), Position = UDim2.fromOffset(x - 8, 28), Size = UDim2.fromOffset(60, 14) })
+	end
+end
+chainChip("eng", 16, 236)
+chainArrow(256, CH.Arrow1)
+chainChip("life", 304, 236)
+chainArrow(544, CH.Arrow2)
+chainChip("bot", 592, 236)
+label(chainBox, { Text = "+", Font = Enum.Font.GothamBlack, TextSize = 30, TextColor3 = C.Gold, Position = UDim2.fromOffset(832, 40), Size = UDim2.fromOffset(40, 34) })
+chainChip("cap", 876, 260)
+local function drawChain()
+	local mine = string.split(player:GetAttribute("Roles") or (player:GetAttribute("Role") or ""), ",")
+	for role, chip in chainChips do
+		local you = chip:FindFirstChild("TextLabel", false)
+		local isMine = table.find(mine, role) ~= nil or player:GetAttribute("Role") == role
+		for _, c in chip:GetChildren() do
+			if c:IsA("TextLabel") and c.Text == CH.You then
+				c.Visible = isMine
+			end
+		end
+		chip.BackgroundColor3 = isMine and Color3.fromHex("FFF6D6") or C.Text
+	end
+end
+player:GetAttributeChangedSignal("Role"):Connect(drawChain)
+player:GetAttributeChangedSignal("Roles"):Connect(drawChain)
+drawChain()
 
 local readyBtn = redButton(B, "READY", 300, 596, 300, 70)
 local readyText = new("TextLabel", {

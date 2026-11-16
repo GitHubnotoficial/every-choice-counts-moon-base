@@ -331,11 +331,13 @@ local function launchCinematic()
 	local saved = { ClockTime = Lighting.ClockTime, Brightness = Lighting.Brightness, Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient }
 	local atm = Lighting:FindFirstChildOfClass("Atmosphere")
 	local atmDensity = atm and atm.Density
-	Lighting.ClockTime = 0
-	Lighting.Brightness = 2
-	Lighting.Ambient = Color3.fromHex("6A6F90")
-	Lighting.OutdoorAmbient = Color3.fromHex("8A90B0")
-	if atm then atm.Density = 0 end
+	local atmHaze, atmGlare = atm and atm.Haze, atm and atm.Glare -- 16-nov: la bruma pintaba el espacio de azul
+	-- 16-nov: luz de espacio con contraste (lado de día y lado de noche en la Tierra y la Luna)
+	Lighting.ClockTime = 9
+	Lighting.Brightness = 3
+	Lighting.Ambient = Color3.fromHex("1C1A34")
+	Lighting.OutdoorAmbient = Color3.fromHex("2A2850")
+	if atm then atm.Density = 0; atm.Haze = 0; atm.Glare = 0 end
 	-- en el espacio no hay nubes ni luz de atardecer
 	local clouds = workspace.Terrain:FindFirstChildOfClass("Clouds")
 	local warm = Lighting:FindFirstChild("SO_EarthWarm") :: ColorCorrectionEffect?
@@ -348,12 +350,58 @@ local function launchCinematic()
 	space.Name = "SO_CinematicSpace"
 	space.Parent = workspace
 	local rng = Random.new(3)
-	for _ = 1, 260 do
+	-- 16-nov: caja negra alrededor (tapa el cielo azul de día de Roblox; la luz del Sol sigue iluminando)
+	for _, axis in { Vector3.xAxis, -Vector3.xAxis, Vector3.yAxis, -Vector3.yAxis, Vector3.zAxis, -Vector3.zAxis } do
+		local wall = part(space, "SpaceWall", Vector3.new(4200, 4200, 2), CFrame.lookAt(S + axis * 2000, S), Color3.fromRGB(3, 2, 10), Enum.Material.Neon)
+		wall.CastShadow = false
+	end
+	-- 16-nov: cielo más lindo: estrellas de colores y tamaños distintos, una Vía Láctea y nebulosas suaves
+	local STAR_COLS = { Color3.new(1, 1, 1), Color3.fromHex("CFE3FF"), Color3.fromHex("FFE9C2"), Color3.fromHex("FFD0D8"), Color3.fromHex("BFD4FF") }
+	local twinkle: { BasePart } = {}
+	for i = 1, 700 do
 		local v = Vector3.new(rng:NextNumber(-1, 1), rng:NextNumber(-1, 1), rng:NextNumber(-1, 1))
 		if v.Magnitude > 0.1 then
-			local s = rng:NextNumber(2, 5)
-			part(space, "Star", Vector3.new(s, s, s), CFrame.new(S + v.Unit * 1400), Color3.new(1, 1, 1), Enum.Material.Neon, Enum.PartType.Ball)
+			local s = rng:NextNumber() < 0.08 and rng:NextNumber(5, 8) or rng:NextNumber(1.5, 3.5)
+			local st = part(space, "Star", Vector3.new(s, s, s), CFrame.new(S + v.Unit * 1500), STAR_COLS[rng:NextInteger(1, #STAR_COLS)], Enum.Material.Neon, Enum.PartType.Ball)
+			if i % 6 == 0 then table.insert(twinkle, st) end
 		end
+	end
+	-- Vía Láctea: banda inclinada de estrellas finitas y nubes de luz
+	local bandCF = CFrame.new(S) * CFrame.Angles(math.rad(62), math.rad(20), 0)
+	for _ = 1, 900 do
+		local a = rng:NextNumber(0, math.pi * 2)
+		local off = rng:NextNumber(-0.12, 0.12) * (rng:NextNumber() < 0.7 and 0.5 or 1)
+		local v = (bandCF.RightVector * math.cos(a) + bandCF.LookVector * math.sin(a) + bandCF.UpVector * off).Unit
+		local s = rng:NextNumber(1, 2.2)
+		part(space, "Milky", Vector3.new(s, s, s), CFrame.new(S + v * 1480), STAR_COLS[rng:NextInteger(1, #STAR_COLS)], Enum.Material.Neon, Enum.PartType.Ball)
+	end
+	local NEB = { Color3.fromHex("7A4DFF"), Color3.fromHex("FF5FA8"), Color3.fromHex("3AA0FF"), Color3.fromHex("9B6BFF") }
+	for i = 1, 26 do
+		local a = rng:NextNumber(0, math.pi * 2)
+		local v = (bandCF.RightVector * math.cos(a) + bandCF.LookVector * math.sin(a) + bandCF.UpVector * rng:NextNumber(-0.08, 0.08)).Unit
+		local d = rng:NextNumber(120, 260)
+		local neb = part(space, "Nebula", Vector3.new(d, d * 0.55, d), CFrame.lookAt(S + v * 1700, S) * CFrame.Angles(0, 0, rng:NextNumber(0, 6.28)), NEB[(i % #NEB) + 1], Enum.Material.Neon, Enum.PartType.Ball)
+		neb.Transparency = rng:NextNumber(0.93, 0.97)
+	end
+	-- El Sol: disco brillante con halo, en la misma dirección de la luz
+	local sunDir = Lighting:GetSunDirection()
+	local sunPart = part(space, "Sun", Vector3.new(90, 90, 90), CFrame.new(S + sunDir * 1300), Color3.fromHex("FFF6DE"), Enum.Material.Neon, Enum.PartType.Ball)
+	local halo = Instance.new("BillboardGui")
+	halo.Size = UDim2.fromScale(5, 5)
+	halo.LightInfluence = 0
+	halo.Parent = sunPart
+	for i, t in { 0.55, 0.72, 0.84, 0.92, 0.96 } do
+		local fr = Instance.new("Frame")
+		fr.AnchorPoint = Vector2.new(0.5, 0.5)
+		fr.Position = UDim2.fromScale(0.5, 0.5)
+		fr.Size = UDim2.fromScale(0.15 + i * 0.17, 0.15 + i * 0.17)
+		fr.BackgroundColor3 = i <= 2 and Color3.new(1, 1, 1) or Color3.fromHex("FFE0A0")
+		fr.BackgroundTransparency = t
+		fr.BorderSizePixel = 0
+		local uc = Instance.new("UICorner")
+		uc.CornerRadius = UDim.new(1, 0)
+		uc.Parent = fr
+		fr.Parent = halo
 	end
 	-- La Tierra (modelo de Ramón si está) atrás y la Luna adelante
 	local earthPos = S + Vector3.new(-330, -40, -170)
@@ -368,22 +416,43 @@ local function launchCinematic()
 	else
 		part(space, "Earth", Vector3.new(230, 230, 230), CFrame.new(earthPos), Color3.fromHex("2F7BFF"), nil, Enum.PartType.Ball)
 	end
+	-- atmósfera azul alrededor de la Tierra
+	local atmo = part(space, "EarthGlow", Vector3.new(246, 246, 246), CFrame.new(earthPos), Color3.fromHex("6FB8FF"), Enum.Material.ForceField, Enum.PartType.Ball)
+	atmo.Transparency = 0.15
+	-- 16-nov: Luna más real: mares oscuros, cráteres con borde claro (pegados a la curva) y brillo en la orilla
 	local moonPos = S + Vector3.new(430, 40, -150)
-	part(space, "Moon", Vector3.new(190, 190, 190), CFrame.new(moonPos), Color3.fromHex("C9C6D8"), Enum.Material.Slate, Enum.PartType.Ball)
-	for _ = 1, 14 do
-		local v = Vector3.new(rng:NextNumber(-1, 0.2), rng:NextNumber(-0.7, 0.7), rng:NextNumber(0.2, 1)).Unit
-		local d = rng:NextNumber(14, 40)
-		part(space, "Crater", Vector3.new(4, d, d), CFrame.lookAt(moonPos + v * 94, moonPos + v * 200) * CFrame.Angles(0, math.rad(90), 0), Color3.fromHex("9C98B2"), Enum.Material.Slate, Enum.PartType.Cylinder)
+	local MR = 95
+	part(space, "Moon", Vector3.new(MR * 2, MR * 2, MR * 2), CFrame.new(moonPos), Color3.fromHex("C4C0D2"), Enum.Material.Slate, Enum.PartType.Ball)
+	local function patch(n: Vector3, w: number, color: Color3, raise: number)
+		local sag = w * w / (8 * MR)
+		local pos = moonPos + n * (MR - sag + raise)
+		local p = part(space, "MoonPatch", Vector3.new(w, 2 * sag + 0.6, w), CFrame.lookAt(pos, pos + n) * CFrame.Angles(-math.pi / 2, 0, 0), color, Enum.Material.Slate)
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = p
 	end
+	local mrng = Random.new(7)
+	for _ = 1, 12 do
+		patch(Vector3.new(mrng:NextNumber(-1, 0.4), mrng:NextNumber(-0.8, 0.8), mrng:NextNumber(0, 1)).Unit, mrng:NextNumber(40, 75), Color3.fromHex("8F8BA6"), 0)
+	end
+	for k = 1, 46 do
+		local n = Vector3.new(mrng:NextNumber(-1, 0.5), mrng:NextNumber(-1, 1), mrng:NextNumber(-0.2, 1)).Unit
+		local w = k <= 6 and mrng:NextNumber(18, 28) or mrng:NextNumber(5, 14)
+		patch(n, w * 1.3, Color3.fromHex("DCD9E8"), 0.3)
+		patch(n, w, Color3.fromHex("85819E"), 0.6)
+	end
+	local moonGlow = part(space, "MoonGlow", Vector3.new(MR * 2.08, MR * 2.08, MR * 2.08), CFrame.new(moonPos), Color3.fromHex("D8CCFF"), Enum.Material.ForceField, Enum.PartType.Ball)
+	moonGlow.Transparency = 0.3
 
 	local sp, sh = shipCopy(st.height * 0.6)
 	sp.Parent = space
 	local spRoot = sp.PrimaryPart :: BasePart
 	local trail = flame(spRoot, Vector3.zero, st.flameSize * 0.5, 120)
-	local from, to = S + Vector3.new(-120, 0, 0), S + Vector3.new(210, 25, -40)
+	local from, to = S + Vector3.new(-150, -10, 10), S + Vector3.new(250, 28, -70)
 	caption.Text = TEXT.OnTheWay
 	fade(1, 0.35)
-	local travel = math.max(2.2, LAUNCH_TIME - st.liftDur - 2.2)
+	-- 16-nov: el viaje dura más (antes ~3 s) para que se luzcan la Tierra, el cielo y la Luna
+	local travel = math.max(6, LAUNCH_TIME - st.liftDur - 2.2)
 	local t1 = os.clock()
 	local puffAt = 0
 	while true do
@@ -406,15 +475,25 @@ local function launchCinematic()
 			TweenService:Create(puff, TweenInfo.new(0.4), { Transparency = 1, Size = Vector3.new(3, 3, 3) }):Play()
 		end
 		if k > 0.6 then caption.Text = TEXT.DaysLater end
-		camera.CFrame = CFrame.lookAt(pos + Vector3.new(-30, 14, 85), pos + Vector3.new(60, 0, -40))
+		-- cámara: empieza mirando atrás (la Tierra se aleja) y gira hasta mirar la Luna que crece adelante
+		local e2 = k * k * (3 - 2 * k)
+		local camOff = Vector3.new(-26, 12, 60):Lerp(Vector3.new(-48, 10, 22), e2)
+		local lookAt = (pos + (earthPos - pos).Unit * 60):Lerp(moonPos, e2)
+		camera.CFrame = CFrame.lookAt(pos + camOff, lookAt:Lerp(pos, 0.25))
+		camera.FieldOfView = 70 - 12 * e2
+		-- las estrellas titilan
+		for i, s2 in twinkle do
+			s2.Transparency = 0.5 + 0.5 * math.sin(t * 4 + i)
+		end
 		if k >= 1 then break end
 		RunService.RenderStepped:Wait()
 	end
 	trail.Enabled = false
 	fade(0, 0.4)
+	camera.FieldOfView = 70
 	space:Destroy()
 	for k, v in saved do (Lighting :: any)[k] = v end
-	if atm and atmDensity then atm.Density = atmDensity end
+	if atm and atmDensity then atm.Density = atmDensity; atm.Haze = atmHaze; atm.Glare = atmGlare end
 	if clouds then clouds.Enabled = cloudsOn end
 	if warm then warm.Enabled = warmOn end
 	finish()

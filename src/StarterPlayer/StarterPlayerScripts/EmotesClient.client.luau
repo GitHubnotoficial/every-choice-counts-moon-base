@@ -34,8 +34,9 @@ local function btn(icon: string, key: string, y: number): TextButton
 	b.TextScaled = true
 	b.Font = Enum.Font.GothamBold
 	b.BackgroundColor3 = C.Text
+	-- 16-nov (Claude): abajo a la izquierda; en el medio tapaban la lista de tareas de la Fase 3
 	b.AnchorPoint = Vector2.new(0, 0.5)
-	b.Position = UDim2.new(0, 12, 0.5, y)
+	b.Position = UDim2.new(0, 12, 1, y - 124)
 	b.Size = UDim2.fromOffset(52, 52)
 	local c = Instance.new("UICorner")
 	c.CornerRadius = UDim.new(1, 0)

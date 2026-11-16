@@ -37,7 +37,7 @@ gui:SetAttribute("NoBigText", true) -- este menú no se agranda (ya es grande)
 -- Botón de engranaje
 local gear = new("TextButton", {
 	Text = "⚙", Font = Enum.Font.GothamBold, TextSize = 30, TextColor3 = C.Text, BackgroundColor3 = PANEL, BackgroundTransparency = 0.1,
-	AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 12, 0.5, -60), Size = UDim2.fromOffset(52, 52),
+	AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 12, 1, -184), Size = UDim2.fromOffset(52, 52), -- 16-nov: abajo a la izquierda (tapaba las tareas)
 }, gui)
 corner(gear)
 new("UIStroke", { Color = C.Text, Thickness = 2, Transparency = 0.6, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, gear)

@@ -76,16 +76,112 @@ Config.Extras = {
 		TeamTitle = "Our team",
 		SourcesTitle = "Where the science comes from",
 		Thanks = "Made for the NASA Space Apps Challenge 2026. Thanks for playing!",
+		MoonSign = "WELCOME TO THE MOON BASE",
+		NightComing = "The Sun is going down: lamps on!",
 	},
+	-- Noche en la Fase 3 (solo visual): al final de cada día se oscurece y se prenden los focos
+	Night = {
+		Start = 0.3, -- empieza cuando queda este pedazo del día (0.3 = último 30 %)
+		Full = 0.12, -- totalmente de noche cuando queda esto
+		Brightness = -0.18,
+		Tint = Color3.fromRGB(170, 185, 255),
+	},
+	-- Animaciones de las misiones (MissionAnims). Se elige el estilo por palabras del texto "Hold E to ...".
+	-- Kind: sparks (chispas), drops (gotas), leaves (hojas), dust (polvo), rays (rayos de sol), rings (anillos), count (números)
+	MissionFx = {
+		{ Words = { "repair", "fix", "filter", "valve", "battery", "radiator", "seal" }, Icon = "🔧", Kind = "sparks", Color = Color3.fromRGB(255, 170, 60) },
+		{ Words = { "water", "hose", "ice", "melt", "drill", "load" }, Icon = "💧", Kind = "drops", Color = Color3.fromRGB(90, 180, 255) },
+		{ Words = { "plant", "seed", "harvest", "tray" }, Icon = "🌱", Kind = "leaves", Color = Color3.fromRGB(110, 220, 110) },
+		{ Words = { "clean", "dust", "dig", "regolith" }, Icon = "🧹", Kind = "dust", Color = Color3.fromRGB(210, 205, 225) },
+		{ Words = { "tilt", "panel", "sun" }, Icon = "☀️", Kind = "rays", Color = Color3.fromRGB(255, 220, 80) },
+		{ Words = { "beacon", "antenna", "signal" }, Icon = "📡", Kind = "rings", Color = Color3.fromRGB(120, 230, 255) },
+		{ Words = { "count", "crate", "check" }, Icon = "📦", Kind = "count", Color = Color3.fromRGB(255, 200, 120) },
+	},
+	MissionFxDefault = { Icon = "⭐", Kind = "sparks", Color = Color3.fromRGB(255, 214, 70) },
+	MissionDoneText = "Done!",
+	-- Pantalla final "Tus decisiones y qué pasó" (DecisionsRecap)
+	Recap = {
+		Button = "📋 YOUR CHOICES",
+		Title = "YOUR CHOICES AND WHAT HAPPENED",
+		Won = "The base survived! Every choice counted.",
+		Lost = "The base did not survive this time. Try other choices!",
+		Emergencies = "Emergencies solved: %d of %d",
+		ColChose = "YOU CHOSE",
+		ColHappened = "WHAT HAPPENED",
+		ColReal = "IN REAL LIFE",
+		NoChoice = "(no choice)",
+		PlacedAt = "Placed at: %s",
+		CargoHeavy = "The ship was too heavy (%d of %d), so everyone started with only %d%% air and water.",
+		CargoOk = "The cargo fit (%d of %d), so everyone started with full air and water.",
+		Late = "The ship needed extra fuel stops, so the crew arrived late.",
+		Rough = "The landing was rough.",
+		Site = "You landed at %s.",
+		Energy = "The base made %d energy and used %d.",
+		EnergyShort = "There was not enough energy for everything.",
+		Reserve = "At the end the base had %d%% air and %d%% water saved.",
+		Food = "Harvests: %d. Food left at the end: %s days.",
+		MissionDone = "✅ Phase 2 mission complete.",
+		MissionNot = "❌ Phase 2 mission not finished.",
+		Close = "Close",
+	},
+	-- Datos "Luna vs Tierra" (MoonVsEarth): salen una vez por partida cuando pasa algo. Fuente al lado de cada uno.
+	CompareTitle = "MOON vs EARTH",
+	Compare = {
+		Gravity = "On the Moon you weigh about 1/6 of your weight on Earth. A kid who weighs 30 kg on Earth would weigh about 5 kg on the Moon!",
+		-- Fuente: Astronomy.com, "How much would I weigh on other planets?" (1.62 vs 9.81 m/s²)
+		Oxygen = "Each astronaut breathes about 0.84 kg of oxygen every day. In space, every breath of air must be carried or made.",
+		-- Fuente: NASA Marshall, needs per person per day (O2 = 0.84 kg); NASA ECLSS fact sheet (1.83 lb/day)
+		Water = "An astronaut uses about 1 gallon (almost 4 liters) of water a day to drink, cook and wash. At home, a person in the U.S. uses about 80 gallons a day!",
+		-- Fuente: NASA ECLSS fact sheet (about a gallon per day); Popular Science (80 gallons at home)
+		Temperature = "The Moon has no air to keep heat in. Near its equator it reaches 120 °C in the day and −130 °C at night. The poles are even colder!",
+		-- Fuente: NASA LRO Diviner, "Temperature Variation on the Moon"
+		DayLength = "In this game a day lasts %d seconds. A real daytime on the Moon lasts about 14 Earth days, and the night lasts about 14 more!",
+		-- Fuente: NASA LRO Diviner, "Temperature Variation on the Moon"
+	},
+	CompareSeconds = 10, -- cuánto se ve cada dato
+	-- Consejo para la próxima vez al morir (DeathTips). La clave es el texto "Why..." de Config.Text3 que puso Bars.
+	-- Se muestran los 2 primeros que apliquen, en este orden.
+	DeathTipTitle = "TIP FOR NEXT TIME",
+	DeathTips = {
+		{ Why = "WhyRad", Tip = "Radiation was too high. Spend more time inside the habitat, and hide there during solar storms." },
+		{ Why = "WhyReserveO2", Tip = "The base ran out of oxygen. Life Support must keep the machines working, and everyone should refill only when needed." },
+		{ Why = "WhyReserveWater", Tip = "The base ran out of water. Recycling water and getting ice keeps the reserve full." },
+		{ Why = "WhyCO2", Tip = "Bad air makes oxygen drop faster. Fix air emergencies quickly and refill more often." },
+		{ Why = "WhyNeverRefill", Tip = "Walk to the OXYGEN and WATER tanks and hold E to refill your bars." },
+		{ Why = "WhyLastRefill", Tip = "Refill earlier: when a bar gets to half, go back to the tanks." },
+		{ Why = "WhyOutside", Tip = "Outside, air and water go down 2× faster. Do your task and come back inside." },
+		{ Why = "WhyLander", Tip = "The lander does not fully block radiation. Move to the habitat once it is built." },
+	},
+	DeathTipWater = "Keep an eye on your WATER bar: it can run out before your air.",
+	DeathTipOxygen = "Keep an eye on your OXYGEN bar and refill before it gets low.",
+	-- Cadena del equipo en el briefing (MenuScreens): quién necesita a quién
+	Chain = {
+		Title = "TEAMWORK: EVERY ROLE NEEDS THE OTHERS",
+		eng = { Icon = "⚡", What = "makes the energy" },
+		life = { Icon = "💨", What = "makes air + water" },
+		bot = { Icon = "🌱", What = "grows the food" },
+		cap = { Icon = "🛡", What = "keeps the crew safe from radiation" },
+		Arrow1 = "energy",
+		Arrow2 = "water",
+		You = "YOU",
+	},
+	FlyoverSeconds = 3, -- vuelo de cámara al empezar la Fase 0, 2 y 3
+	MenuBlur = 10, -- desenfoque del mundo detrás de las pantallas de menú
 	-- PENDIENTE: el equipo debe completar estas listas (nombres y fuentes reales que usaron)
 	Credits = {
 		Team = {
-			"Leticia",
-			"Isaac",
-			"Celeste",
+			"Yamir Jhosue Soteldo León",
+			"Isaac Gerardo Daniel Romero Alviarez",
+			"María Celeste Salinas Viloria",
+			"Letizia Mariel Fernández Carmona",
+			"Ramón Gregorio Araujo Mayorca",
 		},
 		Sources = {
-			"(add the sources of the science facts here)",
+			"Astronomy.com: How much would I weigh on other planets? (Moon gravity)",
+			"NASA Marshall Space Flight Center: astronaut needs per day (oxygen)",
+			"NASA: Environmental Control and Life Support System fact sheet (water and oxygen)",
+			"Popular Science: How the ISS recycles its air and water (water at home)",
+			"NASA Lunar Reconnaissance Orbiter: Temperature Variation on the Moon",
 		},
 	},
 }

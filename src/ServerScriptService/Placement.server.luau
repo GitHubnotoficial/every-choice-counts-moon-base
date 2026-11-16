@@ -292,26 +292,77 @@ end
 ---------------------------------------------------------------------
 -- Martillo y aparición
 ---------------------------------------------------------------------
+-- 16-nov (Claude): antes era una barra gris que flotaba delante del astronauta. Ahora el martillo lunar de Ramón
+-- (ServerStorage.SO_MoonProps.Hammer) va soldado a la mano derecha. El servidor solo pone el martillo y el
+-- atributo SO_Hammering en el personaje; el movimiento del brazo, el polvo, las chispas y el sonido los hace
+-- cada cliente (StarterPlayerScripts.SO_MoonFX) para que se vean suaves.
+local HAMMER_LENGTH = 1.9 -- studs (el modelo real mide 0,35)
+local function makeHammer(): Model
+	local props = game:GetService("ServerStorage"):FindFirstChild("SO_MoonProps")
+	local tpl = props and props:FindFirstChild("Hammer")
+	local m: Model
+	if tpl then
+		m = tpl:Clone()
+		local _, size = m:GetBoundingBox()
+		m:ScaleTo(m:GetScale() * HAMMER_LENGTH / math.max(size.X, 0.01))
+	else
+		-- Respaldo con piezas: mango y cabeza
+		m = Instance.new("Model")
+		local handle = Instance.new("Part")
+		handle.Size = Vector3.new(HAMMER_LENGTH, 0.22, 0.22)
+		handle.Color = Color3.fromRGB(120, 124, 132)
+		handle.Material = Enum.Material.Metal
+		handle.Parent = m
+		local head = Instance.new("Part")
+		head.Size = Vector3.new(0.35, 0.35, 0.9)
+		head.Color = Color3.fromRGB(70, 74, 82)
+		head.Material = Enum.Material.Metal
+		head.CFrame = handle.CFrame * CFrame.new(-HAMMER_LENGTH / 2 + 0.17, 0, 0)
+		head.Parent = m
+	end
+	m.Name = "SO_Hammer"
+	return m
+end
+
 local function hammer(player: Player, seconds: number)
-	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if not root then
+	local char = player.Character
+	local hand = char and (char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")) :: BasePart?
+	if not hand then
 		return
 	end
-	local h = Instance.new("Part")
-	h.Name = "SO_Hammer"
-	h.Size = Vector3.new(0.6, 0.6, 2.6)
-	h.Color = Config.Colors.Dim
-	h.Anchored = true
-	h.CanCollide = false
-	h.CanQuery = false
-	local base = root.CFrame * CFrame.new(1.4, 0.6, -1.8)
-	h.CFrame = base * CFrame.Angles(math.rad(40), 0, 0)
-	h.Parent = workspace
-	local hits = math.max(1, math.floor(seconds / 0.5))
-	local info = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In, hits - 1, true)
-	TweenService:Create(h, info, { CFrame = base * CFrame.Angles(math.rad(-50), 0, 0) }):Play()
+	local old = char:FindFirstChild("SO_Hammer")
+	if old then old:Destroy() end
+	local m = makeHammer()
+	-- El modelo tiene el mango en X y la cabeza en el extremo -X: el mango sigue al brazo (-Y de la mano),
+	-- con la cabeza abajo y la cara hacia adelante.
+	local cf, size = m:GetBoundingBox()
+	local handDown = hand.Size.Y / 2
+	local target = hand.CFrame * CFrame.new(0, -handDown - size.X / 2 + 0.35, 0) * CFrame.Angles(0, 0, math.rad(90))
+	m:PivotTo(target * cf:ToObjectSpace(m:GetPivot())) -- el centro de la caja va a 'target'
+	for _, d in m:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.Anchored = false
+			d.CanCollide = false
+			d.CanQuery = false
+			d.CanTouch = false
+			d.Massless = true
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = hand
+			w.Part1 = d
+			w.Parent = d
+		end
+	end
+	-- Punto de la cabeza (para el polvo y las chispas del cliente)
+	local tip = Instance.new("Attachment")
+	tip.Name = "SO_HammerTip"
+	tip.Parent = hand
+	tip.Position = Vector3.new(0, -handDown - size.X + 0.45, 0)
+	m.Parent = char
+	char:SetAttribute("SO_Hammering", true)
 	task.delay(seconds, function()
-		h:Destroy()
+		if char.Parent then char:SetAttribute("SO_Hammering", nil) end
+		if m.Parent then m:Destroy() end
+		if tip.Parent then tip:Destroy() end
 	end)
 end
 

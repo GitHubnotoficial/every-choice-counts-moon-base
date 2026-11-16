@@ -4,7 +4,8 @@
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local elegirRolEvent = replicatedStorage:WaitForChild("ElegirRolEvent")
 
-local background = script.Parent:WaitForChild("Background")
+-- 16-nov (Claude): el Frame se llama "background" (minúscula); antes esperaba "Background" para siempre
+local background = script.Parent:FindFirstChild("Background") or script.Parent:WaitForChild("background")
 local ultimoClic = 0
 local rolSeleccionadoActual = nil
 

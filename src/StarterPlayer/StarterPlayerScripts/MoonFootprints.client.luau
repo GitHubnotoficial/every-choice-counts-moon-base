@@ -33,7 +33,7 @@ local function makePrint(pos: Vector3, normal: Vector3, forward: Vector3, color:
 	-- huella: suela ovalada + tacón, un poco más oscuras que el suelo
 	local right = forward:Cross(normal).Unit
 	forward = normal:Cross(right).Unit
-	local base = CFrame.fromMatrix(pos + normal * 0.03, right, normal, -forward)
+	local base = CFrame.fromMatrix(pos + normal * 0.06, right, normal, -forward) -- encima de las manchas del suelo (0.04)
 	local dark = color:Lerp(Color3.new(0, 0, 0), 0.32)
 	local parts = {}
 	for i, spec in { { Vector3.new(0.75, 0.05, 1.05), CFrame.new(0, 0, -0.35) }, { Vector3.new(0.6, 0.05, 0.6), CFrame.new(0, 0, 0.6) } } do

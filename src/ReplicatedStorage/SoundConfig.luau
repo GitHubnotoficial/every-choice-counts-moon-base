@@ -14,5 +14,6 @@ return {
 	Launch = { Id = 12222065, Volume = 0.8 }, -- "Launching rocket.wav" (Roblox): despegue
 	Rumble = { Id = 9113224519, Volume = 0.35 }, -- "Avalanche Very Deep Crumbling 2" (Pro Sound Effects): motores del despegue y del aterrizaje
 	Victory = { Id = 1836473422, Volume = 0.7 }, -- "Victory Fanfare Sting" (APM Music): MISSION COMPLETE
+	Hammer = { Id = 9125672726, Volume = 0.35 }, -- 16-nov: "Metal Impact Sledge Hammer Hits" (Pro Sound Effects): martillo de la Fase 1
 	Fail = { Id = 125909120236588, Volume = 0.6 }, -- "Mounting Consequences StingA" (APM Music): MISSION FAILED / muerte
 }
